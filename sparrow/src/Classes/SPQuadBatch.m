@@ -342,7 +342,7 @@
 
 #pragma mark Properties
 
-- (BOOL)forceTinted
+- (BOOL)tinted
 {
     return _tinted || _forceTinted;
 }
@@ -383,11 +383,12 @@
 
 - (instancetype)copyWithZone:(NSZone *)zone
 {
-    SPQuadBatch *quadBatch = [super copyWithZone: zone];
+    SPQuadBatch *quadBatch = [super copyWithZone:zone];
     
     quadBatch.capacity = self.capacity;
     quadBatch->_numQuads = _numQuads;
     quadBatch->_tinted = _tinted;
+    quadBatch->_forceTinted = _forceTinted;
     quadBatch->_texture = [_texture retain];
     quadBatch->_syncRequired = YES;
     
@@ -421,12 +422,13 @@
 
 #pragma mark Compilation Methods
 
-+ (__SP_GENERICS(NSMutableArray,SPQuadBatch*) *)compileObject:(SPDisplayObject *)object
++ (SP_GENERIC(NSMutableArray, SPQuadBatch*) *)compileObject:(SPDisplayObject *)object
 {
     return [self compileObject:object intoArray:nil];
 }
 
-+ (__SP_GENERICS(NSMutableArray,SPQuadBatch*) *)compileObject:(SPDisplayObject *)object intoArray:(__SP_GENERICS(NSMutableArray,SPQuadBatch*) *)quadBatches
++ (SP_GENERIC(NSMutableArray, SPQuadBatch*) *)compileObject:(SPDisplayObject *)object
+                                                  intoArray:(SP_GENERIC(NSMutableArray, SPQuadBatch*) *)quadBatches
 {
     if (!quadBatches) quadBatches = [NSMutableArray array];
     
@@ -436,7 +438,7 @@
     return quadBatches;
 }
 
-+ (void)optimize:(__SP_GENERICS(NSMutableArray,SPQuadBatch*) *)quadBatches
++ (void)optimize:(SP_GENERIC(NSMutableArray, SPQuadBatch*) *)quadBatches
 {
     SPQuadBatch *batch1, *batch2;
     for (NSInteger i=0; i<quadBatches.count; ++i)
@@ -457,7 +459,7 @@
     }
 }
 
-+ (NSInteger)compileObject:(SPDisplayObject *)object intoArray:(__SP_GENERICS(NSMutableArray,SPQuadBatch*) *)quadBatches
++ (NSInteger)compileObject:(SPDisplayObject *)object intoArray:(SP_GENERIC(NSMutableArray, SPQuadBatch*) *)quadBatches
                 atPosition:(NSInteger)quadBatchID withMatrix:(SPMatrix *)transformationMatrix
                      alpha:(float)alpha blendMode:(uint)blendMode
 {
@@ -599,10 +601,12 @@
 
     // don't use 'glBufferSubData'! It's much slower than uploading
     // everything via 'glBufferData', at least on the iPad 1.
+    
+    // as the size parameter, we could also use '_numQuads * 4', but on iOS GPU hardware, this is
+    // slower than updating the complete buffer.
 
     glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferName);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(SPVertex) * _numQuads * 4,
-                 _vertexData.vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(SPVertex) * _vertexData.numVertices, _vertexData.vertices, GL_STATIC_DRAW);
 
     _syncRequired = NO;
 }
