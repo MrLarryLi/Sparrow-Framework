@@ -500,6 +500,13 @@ static SPDisplayObject *findCommonParent(SPDisplayObject *object1, SPDisplayObje
     }
 }
 
+- (void)setX: (float)x y: (float)y
+{
+    _x = x;
+    _y = y;
+    _orientationChanged = YES;
+}
+
 - (float)scale
 {
     if (!SPIsFloatEqual(_scaleX, _scaleY))
@@ -569,6 +576,13 @@ static SPDisplayObject *findCommonParent(SPDisplayObject *object1, SPDisplayObje
         _pivotY = value;
         _orientationChanged = YES;
     }
+}
+
+- (void)setPivotX: (float)pivotX pivotY: (float)pivotY
+{
+    _pivotX = pivotX;
+    _pivotY = pivotY;
+    _orientationChanged = YES;
 }
 
 - (float)width

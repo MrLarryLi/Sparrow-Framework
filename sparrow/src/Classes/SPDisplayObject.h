@@ -144,6 +144,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// Creates an event and dispatches it on all children (recursively).
 - (void)broadcastEventWithType:(NSString *)type;
 
+/// Sets both x and y members.
+- (void)setX: (float)x y: (float)y;
+
+/// Sets both pivotX and pivotY members.
+- (void)setPivotX: (float)pivotX pivotY: (float)pivotY;
+
 /// ----------------
 /// @name Properties
 /// ----------------
