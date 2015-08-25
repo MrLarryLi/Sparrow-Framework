@@ -79,6 +79,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Sets the members of the rectangle to the specified values.
 - (void)setX:(float)x y:(float)y width:(float)width height:(float)height;
 
+/// Sets the x and y members to the specified values.
+- (void)setX: (float)x y:(float)y;
+
 /// Sets width and height components to zero.
 - (void)setEmpty;
 
