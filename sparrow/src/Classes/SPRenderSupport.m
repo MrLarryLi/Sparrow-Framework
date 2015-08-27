@@ -27,6 +27,7 @@
 #import "SPTexture.h"
 #import "SPPoint3D.h"
 #import "SPVertexData.h"
+#import "SPQuadBatchStack.h"
 
 #define RENDER_TARGET_NAME @"Sparrow.renderTarget"
 
@@ -100,10 +101,9 @@
     NSInteger _matrix3DStackSize;
     SPMatrix3D *_modelViewMatrix3D;
 
-    SP_GENERIC(NSMutableArray, SPQuadBatch*) *_quadBatches;
-    SPQuadBatch *_quadBatchTop;
-    NSInteger _quadBatchIndex;
-    NSInteger _quadBatchSize;
+    SPQuadBatchStack *_texturedQuadBatchStack;
+    SPQuadBatchStack *_nonTexturedQuadBatchStack;
+    SPQuadBatchStack *_primaryQuadBatchStack;
 
     SP_GENERIC(NSMutableArray, SPRectangle*) *_clipRectStack;
     NSInteger _clipRectStackSize;
@@ -133,10 +133,9 @@
         _matrix3DStack = [[NSMutableArray alloc] init];
         _matrix3DStackSize = 0;
 
-        _quadBatches = [[NSMutableArray alloc] initWithObjects:[self createQuadBatch], nil];
-        _quadBatchIndex = 0;
-        _quadBatchSize = 1;
-        _quadBatchTop = _quadBatches[0];
+        _texturedQuadBatchStack = [SPQuadBatchStack newStack];
+        _nonTexturedQuadBatchStack = [SPQuadBatchStack newStack];
+        _primaryQuadBatchStack = _texturedQuadBatchStack;
 
         _clipRectStack = [[NSMutableArray alloc] init];
         _clipRectStackSize = 0;
@@ -158,7 +157,8 @@
     [_mvpMatrix3D release];
     [_matrix3DStack release];
     [_stateStack release];
-    [_quadBatches release];
+    [_texturedQuadBatchStack release];
+    [_nonTexturedQuadBatchStack release];
     [_clipRectStack release];
     [_maskStack release];
     [super dealloc];
@@ -168,13 +168,8 @@
 
 - (void)purgeBuffers
 {
-    [_quadBatches removeAllObjects];
-
-    _quadBatchTop = [self createQuadBatch];
-    [_quadBatches addObject:_quadBatchTop];
-
-    _quadBatchIndex = 0;
-    _quadBatchSize = 1;
+    [_texturedQuadBatchStack purgeBuffers];
+    [_nonTexturedQuadBatchStack purgeBuffers];
 }
 
 - (void)clear
@@ -280,24 +275,19 @@
 - (void)nextFrame
 {
     [self trimQuadBatches];
+    [_nonTexturedQuadBatchStack prepForNextFrame];
+    [_texturedQuadBatchStack prepForNextFrame];
 
     _clipRectStackSize = 0;
     _stateStackIndex = 0;
-    _quadBatchIndex = 0;
     _numDrawCalls = 0;
-    _quadBatchTop = _quadBatches[0];
     _stateStackTop = _stateStack[0];
 }
 
 - (void)trimQuadBatches
 {
-    NSInteger numUsedBatches = _quadBatchIndex + 1;
-    if (_quadBatchSize >= 16 && _quadBatchSize > 2 * numUsedBatches)
-    {
-        NSInteger numToRemove = _quadBatchSize - numUsedBatches;
-        [_quadBatches removeObjectsInRange:(NSRange){ _quadBatchSize-numToRemove-1, numToRemove }];
-        _quadBatchSize = _quadBatches.count;
-    }
+    [_texturedQuadBatchStack trimQuadBatches];
+    [_nonTexturedQuadBatchStack trimQuadBatches];
 }
 
 - (void)batchQuad:(SPQuad *)quad
@@ -306,14 +296,30 @@
     uint blendMode = _stateStackTop->_blendMode;
     SPMatrix *modelViewMatrix = _stateStackTop->_modelViewMatrix;
 
-    if ([_quadBatchTop isStateChangeWithTinted:quad.tinted texture:quad.texture alpha:alpha
-                            premultipliedAlpha:quad.premultipliedAlpha blendMode:blendMode
-                                      numQuads:1])
+    SPTexture *quadTexture = quad.texture;
+    if( quadTexture ) {
+        if( _primaryQuadBatchStack != _texturedQuadBatchStack ) {
+            [self finishQuadBatch];
+            _primaryQuadBatchStack = _texturedQuadBatchStack;
+        }
+    } else {
+        if( _primaryQuadBatchStack != _nonTexturedQuadBatchStack ) {
+            [self finishQuadBatch];
+            _primaryQuadBatchStack = _nonTexturedQuadBatchStack;
+        }
+    }
+    
+    if ([_primaryQuadBatchStack->_quadBatchTop isStateChangeWithTinted:quad.tinted
+                                                               texture:quadTexture
+                                                                 alpha:alpha
+                                                    premultipliedAlpha:quad.premultipliedAlpha
+                                                             blendMode:blendMode
+                                                              numQuads:1])
     {
         [self finishQuadBatch]; // next batch
     }
 
-    [_quadBatchTop addQuad:quad alpha:alpha blendMode:blendMode matrix:modelViewMatrix];
+    [_primaryQuadBatchStack->_quadBatchTop addQuad:quad alpha:alpha blendMode:blendMode matrix:modelViewMatrix];
 }
 
 - (void)batchQuadBatch:(SPQuadBatch *)quadBatch
@@ -322,71 +328,50 @@
     uint blendMode = _stateStackTop->_blendMode;
     SPMatrix *modelViewMatrix = _stateStackTop->_modelViewMatrix;
     
-    if ([_quadBatchTop isStateChangeWithTinted:quadBatch.tinted texture:quadBatch.texture
-                                         alpha:quadBatch.alpha premultipliedAlpha:quadBatch.premultipliedAlpha
-                                     blendMode:quadBatch.blendMode numQuads:quadBatch.numQuads])
+    SPTexture *quadBatchTexture = quadBatch.texture;
+    if( quadBatchTexture ) {
+        if( _primaryQuadBatchStack != _texturedQuadBatchStack ) {
+            [self finishQuadBatch];
+            _primaryQuadBatchStack = _texturedQuadBatchStack;
+        }
+    } else {
+        if( _primaryQuadBatchStack != _nonTexturedQuadBatchStack ) {
+            [self finishQuadBatch];
+            _primaryQuadBatchStack = _nonTexturedQuadBatchStack;
+        }
+    }
+    
+    if ([_primaryQuadBatchStack->_quadBatchTop isStateChangeWithTinted:quadBatch.tinted
+                                                               texture:quadBatchTexture
+                                                                 alpha:quadBatch.alpha
+                                                    premultipliedAlpha:quadBatch.premultipliedAlpha
+                                                             blendMode:quadBatch.blendMode
+                                                              numQuads:quadBatch.numQuads])
     {
         [self finishQuadBatch]; // next batch
     }
     
-    [_quadBatchTop addQuadBatch:quadBatch alpha:alpha blendMode:blendMode matrix:modelViewMatrix];
+    [_primaryQuadBatchStack->_quadBatchTop addQuadBatch:quadBatch alpha:alpha blendMode:blendMode matrix:modelViewMatrix];
 }
 
 - (void)finishQuadBatch
 {
-    if (_quadBatchTop.numQuads)
+    if (_primaryQuadBatchStack->_quadBatchTop.numQuads)
     {
         if (_matrix3DStackSize == 0)
         {
-            [_quadBatchTop renderWithMvpMatrix3D:_projectionMatrix3D];
+            [_primaryQuadBatchStack->_quadBatchTop renderWithMvpMatrix3D:_projectionMatrix3D];
         }
         else
         {
             [_mvpMatrix3D copyFromMatrix:_projectionMatrix3D];
             [_mvpMatrix3D prependMatrix:_modelViewMatrix3D];
-            [_quadBatchTop renderWithMvpMatrix3D:_mvpMatrix3D];
+            [_primaryQuadBatchStack->_quadBatchTop renderWithMvpMatrix3D:_mvpMatrix3D];
         }
         
-        [_quadBatchTop reset];
-
-        if (_quadBatchSize == _quadBatchIndex + 1)
-        {
-            [_quadBatches addObject:[self createQuadBatch]];
-            ++_quadBatchSize;
-        }
-
+        [_primaryQuadBatchStack resetStack];
         ++_numDrawCalls;
-        _quadBatchTop = _quadBatches[++_quadBatchIndex];
     }
-}
-
-- (SPQuadBatch *)createQuadBatch
-{
-    static BOOL forceTinted = YES;
-    static dispatch_once_t onceToken;
-    
-    dispatch_once(&onceToken, ^
-    {
-        NSString *platform = [[UIDevice currentDevice] platform];
-        NSString *version  = [[UIDevice currentDevice] platformVersion];
-        
-        if ([platform containsString:@"iPhone"])
-        {
-            // disable for iPhone 4 and below
-            if ([[version substringToIndex:1] integerValue] < 4)
-                forceTinted = NO;
-        }
-        else if ([platform containsString:@"iPad"])
-        {
-            // disable for iPad 1
-            if ([[version substringToIndex:1] integerValue] < 2)
-                forceTinted = NO;
-        }
-    });
-    
-    SPQuadBatch *quadBatch = [[SPQuadBatch alloc] init];
-    quadBatch.forceTinted = forceTinted;
-    return [quadBatch autorelease];
 }
 
 #pragma mark State Manipulation

@@ -44,6 +44,6 @@ access it directly when needed.
 - (void)renderWithMatrix: (SPMatrix3D *)matrix;
 
 /// Resets and provides a new quadbatch top
-- (void)reset;
+- (void)resetStack;
 
 @end

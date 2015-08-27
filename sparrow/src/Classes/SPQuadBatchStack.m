@@ -10,7 +10,8 @@
 //
 
 #import "SPQuadBatchStack.h"
-#import <Sparrow/SPQuadBatch.h>
+#import "SPQuadBatch.h"
+#import "SPNSExtensions.h"
 
 @implementation SPQuadBatchStack
 {
@@ -30,7 +31,7 @@
     self = [super init];
     if (self) {
         
-        _quadBatches = [[NSMutableArray alloc] initWithObjects:[SPQuadBatch quadBatch], nil];
+        _quadBatches = [[NSMutableArray alloc] initWithObjects:[self newQuadBatch], nil];
         _quadBatchIndex = 0;
         _quadBatchSize = 1;
         _quadBatchTop = _quadBatches[0];
@@ -53,7 +54,7 @@
 {
     [_quadBatches removeAllObjects];
     
-    _quadBatchTop = [SPQuadBatch quadBatch];
+    _quadBatchTop = [self newQuadBatch];
     [_quadBatches addObject:_quadBatchTop];
     
     _quadBatchIndex = 0;
@@ -85,7 +86,7 @@
     }
 }
 
-- (void)reset
+- (void)resetStack
 {
     if (_quadBatchTop.numQuads)
     {
@@ -93,11 +94,40 @@
         
         if (_quadBatchSize == _quadBatchIndex + 1)
         {
-            [_quadBatches addObject:[SPQuadBatch quadBatch]];
+            [_quadBatches addObject:[self newQuadBatch]];
             ++_quadBatchSize;
         }
         _quadBatchTop = _quadBatches[++_quadBatchIndex];
     }
+}
+
+- (SPQuadBatch *)newQuadBatch
+{
+    static BOOL forceTinted = YES;
+    static dispatch_once_t onceToken;
+    
+    dispatch_once(&onceToken, ^
+      {
+          NSString *platform = [[UIDevice currentDevice] platform];
+          NSString *version  = [[UIDevice currentDevice] platformVersion];
+          
+          if ([platform containsString:@"iPhone"])
+          {
+              // disable for iPhone 4 and below
+              if ([[version substringToIndex:1] integerValue] < 4)
+                  forceTinted = NO;
+          }
+          else if ([platform containsString:@"iPad"])
+          {
+              // disable for iPad 1
+              if ([[version substringToIndex:1] integerValue] < 2)
+                  forceTinted = NO;
+          }
+      });
+    
+    SPQuadBatch *quadBatch = [[SPQuadBatch alloc] init];
+    quadBatch.forceTinted = forceTinted;
+    return [quadBatch autorelease];
 }
 
 @end
