@@ -39,9 +39,12 @@
     BOOL _batchable;
     
     SPBaseEffect *_baseEffect;
-    uint _vertexBufferName;
+    GLuint _vertexBufferName;
     ushort *_indexData;
-    uint _indexBufferName;
+    GLuint _indexBufferName;
+    
+    BOOL _needToCompleteVAOState;
+    GLuint _vertexArrayObjectName;
 }
 
 #pragma mark Initialization
@@ -70,11 +73,11 @@
 
 - (void)dealloc
 {
-    free(_indexData);
+    if(_indexData)
+        free(_indexData);
     
-    glDeleteBuffers(1, &_vertexBufferName);
-    glDeleteBuffers(1, &_indexBufferName);
-
+    [self destroyBuffers];
+    
     [_texture release];
     [_vertexData release];
     [_baseEffect release];
@@ -241,29 +244,40 @@
         int attribColor     = _baseEffect.attribColor;
         int attribTexCoords = _baseEffect.attribTexCoords;
         
-        glEnableVertexAttribArray(attribPosition);
-        glEnableVertexAttribArray(attribColor);
-        
-        if (_texture)
+        glBindVertexArray(_vertexArrayObjectName);
+        if( _texture && _needToCompleteVAOState ) {
+            glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferName);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBufferName);
+
+            glEnableVertexAttribArray(attribPosition);
+            glEnableVertexAttribArray(attribColor);
             glEnableVertexAttribArray(attribTexCoords);
-        
-        glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferName);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBufferName);
-        
-        glVertexAttribPointer(attribPosition, 2, GL_FLOAT, GL_FALSE, sizeof(SPVertex),
-                              (void *)(offsetof(SPVertex, position)));
-        
-        glVertexAttribPointer(attribColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(SPVertex),
-                              (void *)(offsetof(SPVertex, color)));
-        
-        if (_texture)
-        {
+            
+            
+            glVertexAttribPointer(attribPosition, 2, GL_FLOAT, GL_FALSE, sizeof(SPVertex),
+                                  (void *)(offsetof(SPVertex, position)));
+            glVertexAttribPointer(attribColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(SPVertex),
+                                  (void *)(offsetof(SPVertex, color)));
             glVertexAttribPointer(attribTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(SPVertex),
-                                  (void *)(offsetof(SPVertex, texCoords)));
+                                      (void *)(offsetof(SPVertex, texCoords)));
+            _needToCompleteVAOState = NO;
+        } else if( _needToCompleteVAOState ) {
+            glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferName);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBufferName);
+
+            glEnableVertexAttribArray(attribPosition);
+            glEnableVertexAttribArray(attribColor);
+            
+            glVertexAttribPointer(attribPosition, 2, GL_FLOAT, GL_FALSE, sizeof(SPVertex),
+                                  (void *)(offsetof(SPVertex, position)));
+            glVertexAttribPointer(attribColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(SPVertex),
+                                  (void *)(offsetof(SPVertex, color)));
+            _needToCompleteVAOState = NO;
         }
         
         int numIndices = (int)_numQuads * 6;
         glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, 0);
+        glBindVertexArray(0);
     }
 }
 
@@ -573,16 +587,19 @@
     NSInteger numIndices = numVertices / 4 * 6;
     if (numVertices == 0) return;
 
+    glGenVertexArrays(1, &_vertexArrayObjectName);
+    glBindVertexArray(_vertexArrayObjectName);
     glGenBuffers(1, &_vertexBufferName);
     glGenBuffers(1, &_indexBufferName);
 
-    if (!_vertexBufferName || !_indexBufferName)
+    if (!_vertexBufferName || !_indexBufferName || !_vertexArrayObjectName)
         [NSException raise:SPExceptionOperationFailed format:@"could not create vertex buffers"];
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBufferName);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(ushort) * numIndices, _indexData, GL_STATIC_DRAW);
 
     _syncRequired = YES;
+    _needToCompleteVAOState = YES;
 }
 
 - (void)destroyBuffers
@@ -598,6 +615,12 @@
         glDeleteBuffers(1, &_indexBufferName);
         _indexBufferName = 0;
     }
+    
+    if(_vertexArrayObjectName)
+    {
+        glDeleteBuffers(1, &_vertexArrayObjectName);
+        _vertexArrayObjectName = 0;
+    }
 }
 
 - (void)syncBuffers
@@ -611,6 +634,7 @@
     // as the size parameter, we could also use '_numQuads * 4', but on iOS GPU hardware, this is
     // slower than updating the complete buffer.
 
+    glBindVertexArray(_vertexArrayObjectName);
     glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferName);
     glBufferData(GL_ARRAY_BUFFER, sizeof(SPVertex) * _vertexData.numVertices, _vertexData.vertices, GL_STATIC_DRAW);
 
