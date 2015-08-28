@@ -34,8 +34,6 @@
     
     SPTexture *_texture;
     BOOL _premultipliedAlpha;
-    BOOL _tinted;
-    BOOL _forceTinted;
     BOOL _batchable;
     
     SPBaseEffect *_baseEffect;
@@ -55,7 +53,6 @@
     {
         _numQuads = 0;
         _syncRequired = NO;
-        _forceTinted = NO;
         _vertexData = [[SPVertexData alloc] init];
         _baseEffect = [[SPBaseEffect alloc] init];
 
@@ -137,9 +134,6 @@
     if (alpha != 1.0f)
         [_vertexData scaleAlphaBy:alpha atIndex:vertexID numVertices:4];
     
-    if (!_tinted)
-        _tinted = _forceTinted || alpha != 1.0f || quad.tinted;
-    
     _syncRequired = YES;
     _numQuads++;
 }
@@ -182,24 +176,19 @@
     if (alpha != 1.0f)
         [_vertexData scaleAlphaBy:alpha atIndex:vertexID numVertices:numVertices];
     
-    if (!_tinted)
-        _tinted = _forceTinted || alpha != 1.0f || quadBatch.tinted;
-    
     _syncRequired = YES;
     _numQuads += numQuads;
 }
 
-- (BOOL)isStateChangeWithTinted:(BOOL)tinted texture:(SPTexture *)texture alpha:(float)alpha
-             premultipliedAlpha:(BOOL)pma blendMode:(uint)blendMode numQuads:(NSInteger)numQuads
+- (BOOL)isStateChangeWithTexture:(SPTexture *)texture premultipliedAlpha:(BOOL)pma
+                       blendMode:(uint)blendMode numQuads:(NSInteger)numQuads
 {
     if (_numQuads == 0) return NO;
     else if (_numQuads + numQuads > 8192) return YES; // maximum buffer size
     else if (!_texture && !texture)
         return _premultipliedAlpha != pma || self.blendMode != blendMode;
     else if (_texture && texture)
-        return _tinted != (_forceTinted || tinted || alpha != 1.0f) ||
-               _texture.name != texture.name ||
-               self.blendMode != blendMode;
+        return _texture.name != texture.name || self.blendMode != blendMode;
     else return YES;
 }
 
@@ -233,7 +222,6 @@
         _baseEffect.texture = _texture;
         _baseEffect.premultipliedAlpha = _premultipliedAlpha;
         _baseEffect.mvpMatrix3D = matrix;
-        _baseEffect.useTinting = _tinted || alpha != 1.0f;
         _baseEffect.alpha = alpha;
         
         [_baseEffect prepareToDraw];
@@ -362,11 +350,6 @@
 
 #pragma mark Properties
 
-- (BOOL)tinted
-{
-    return _tinted || _forceTinted;
-}
-
 - (NSInteger)capacity
 {
     return _vertexData.numVertices / 4;
@@ -407,8 +390,6 @@
     
     quadBatch.capacity = self.capacity;
     quadBatch->_numQuads = _numQuads;
-    quadBatch->_tinted = _tinted;
-    quadBatch->_forceTinted = _forceTinted;
     quadBatch->_texture = [_texture retain];
     quadBatch->_syncRequired = YES;
     
@@ -434,7 +415,6 @@
         else
         {
             [support finishQuadBatch];
-            [support addDrawCalls:1];
             [self renderWithMvpMatrix3D:support.mvpMatrix3D alpha:support.alpha blendMode:support.blendMode];
         }
     }
@@ -467,9 +447,10 @@
         for (NSInteger j=i+1; j<quadBatches.count; )
         {
             batch2 = quadBatches[j];
-            if (![batch1 isStateChangeWithTinted:batch2.tinted texture:batch2.texture alpha:batch2.alpha
-                              premultipliedAlpha:batch2.premultipliedAlpha blendMode:batch2.blendMode
-                                        numQuads:batch2.numQuads])
+            if (![batch1 isStateChangeWithTexture:batch2.texture
+                               premultipliedAlpha:batch2.premultipliedAlpha
+                                        blendMode:batch2.blendMode
+                                         numQuads:batch2.numQuads])
             {
                 [batch1 addQuadBatch:batch2];
                 [quadBatches removeObjectAtIndex:j];
@@ -533,14 +514,15 @@
     else if (quad || batch)
     {
         SPTexture *texture = (SPTexture *)[(id)object texture];
-        BOOL tinted = [(id)object tinted];
         BOOL pma = [(id)object premultipliedAlpha];
         NSInteger numQuads = batch ? batch.numQuads : 1;
         
         SPQuadBatch *currentBatch = quadBatches[quadBatchID];
         
-        if ([currentBatch isStateChangeWithTinted:tinted texture:texture alpha:alpha * objectAlpha
-                               premultipliedAlpha:pma blendMode:blendMode numQuads:numQuads])
+        if ([currentBatch isStateChangeWithTexture:texture
+                                premultipliedAlpha:pma
+                                         blendMode:blendMode
+                                          numQuads:numQuads])
         {
             quadBatchID++;
             if (quadBatches.count <= quadBatchID) [quadBatches addObject:[SPQuadBatch quadBatch]];
@@ -592,7 +574,7 @@
     glGenBuffers(1, &_vertexBufferName);
     glGenBuffers(1, &_indexBufferName);
 
-    if (!_vertexBufferName || !_indexBufferName || !_vertexArrayObjectName)
+    if (!_vertexBufferName || !_indexBufferName )
         [NSException raise:SPExceptionOperationFailed format:@"could not create vertex buffers"];
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBufferName);
@@ -618,7 +600,7 @@
     
     if(_vertexArrayObjectName)
     {
-        glDeleteBuffers(1, &_vertexArrayObjectName);
+        glDeleteVertexArrays(1, &_vertexArrayObjectName);
         _vertexArrayObjectName = 0;
     }
 }
@@ -637,7 +619,6 @@
     glBindVertexArray(_vertexArrayObjectName);
     glBindBuffer(GL_ARRAY_BUFFER, _vertexBufferName);
     glBufferData(GL_ARRAY_BUFFER, sizeof(SPVertex) * _vertexData.numVertices, _vertexData.vertices, GL_STATIC_DRAW);
-
     _syncRequired = NO;
 }
 

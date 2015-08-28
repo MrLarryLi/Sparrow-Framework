@@ -130,7 +130,6 @@
             [self syncBuffers];
         
         [support finishQuadBatch];
-        [support addDrawCalls:1];
         [support applyBlendModeForPremultipliedAlpha:NO];
         
         int uMvpMatrix = [_program uniformByName:@"uMvpMatrix"];

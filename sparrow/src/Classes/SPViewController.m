@@ -135,6 +135,7 @@
     _support = [[SPRenderSupport alloc] init];
     _viewPort = [[SPRectangle alloc] init];
     _previousViewPort = [[SPRectangle alloc] init];
+    _depthStencilBufferEnabled = YES;
     
     [self setPreferredFramesPerSecond:60];
     [self makeCurrent];
@@ -158,8 +159,6 @@
             SPContext *globalShareContext = [SPContext globalShareContext];
             if (!globalShareContext) [SPContext setGlobalShareContext:_context];
             
-            // the stats display could not be shown before now, since it requires a context.
-            self.showStats = _showStats;
         }
         else SPLog(@"Could not create render context.");
     }
@@ -193,7 +192,7 @@
     {
         [_previousViewPort copyFromRectangle:_viewPort];
         [_context configureBackBufferForDrawable:_internalView.layer antiAlias:_antiAliasing
-                           enableDepthAndStencil:YES wantsBestResolution:_supportHighResolutions];
+                           enableDepthAndStencil:_depthStencilBufferEnabled wantsBestResolution:_supportHighResolutions];
     }
 }
 
@@ -299,9 +298,6 @@
                 [_support setRenderTarget:nil];
                 [_stage render:_support];
                 [_support finishQuadBatch];
-                
-                if (_statsDisplay)
-                    _statsDisplay.numDrawCalls = _support.numDrawCalls - 2; // stats display requires 2 itself
             }
             
           #if DEBUG
@@ -549,24 +545,20 @@
     return _internalView.multipleTouchEnabled;
 }
 
-- (void)setShowStats:(BOOL)showStats
-{
-    if (showStats && !_statsDisplay && _context)
-    {
-        _statsDisplay = [[SPStatsDisplay alloc] init];
-        [_stage addChild:_statsDisplay];
-    }
-
-    _showStats = showStats;
-    _statsDisplay.visible = showStats;
-}
-
 - (void)setAntiAliasing:(NSInteger)antiAliasing
 {
     if (antiAliasing != _antiAliasing)
     {
         _antiAliasing = antiAliasing;
         if (_context) [self updateViewPort:YES];
+    }
+}
+
+- (void)setDepthStencilBufferEnabled:(BOOL)depthStencilBufferEnabled
+{
+    if( _depthStencilBufferEnabled != depthStencilBufferEnabled ) {
+        _depthStencilBufferEnabled = depthStencilBufferEnabled;
+        if (_context) [self updateViewPort: YES];
     }
 }
 

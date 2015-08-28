@@ -38,7 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  One QuadBatch object is bound to a specific render state. The first object you add to a
  batch will decide on the QuadBatch's state, that is: its texture, its settings for
- smoothing and repetition, and if it's tinted (colored vertices and/or transparency).
+ smoothing and repetition.
  When you reset the batch, it will accept a new state on the next added quad.
  
 ------------------------------------------------------------------------------------------------- */
@@ -111,9 +111,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Indicates if specific quads can be added to the batch without causing a state change.
 /// A state change occurs if the quad uses a different base texture, has a different `smoothing`,
-/// `repeat` or 'tinted' setting, or if the batch is full (one batch can contain up to 8192 quads).
-- (BOOL)isStateChangeWithTinted:(BOOL)tinted texture:(SPTexture *)texture alpha:(float)alpha
-             premultipliedAlpha:(BOOL)pma blendMode:(uint)blendMode numQuads:(NSInteger)numQuads;
+/// `repeat` setting, or if the batch is full (one batch can contain up to 8192 quads).
+- (BOOL)isStateChangeWithTexture:(SPTexture *)texture premultipliedAlpha:(BOOL)pma
+                       blendMode:(uint)blendMode numQuads:(NSInteger)numQuads;
 
 /// Renders the batch with custom alpha and blend mode values, as well as a custom mvp matrix.
 - (void)renderWithMvpMatrix:(SPMatrix *)matrix alpha:(float)alpha blendMode:(uint)blendMode SP_DEPRECATED;
@@ -192,16 +192,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// The number of quads that has been added to the batch.
 @property (nonatomic, readonly) NSInteger numQuads;
-
-/// Indicates if any vertices have a non-white color or are not fully opaque.
-@property (nonatomic, readonly) BOOL tinted;
-
-/// If enabled, the QuadBatch will always be rendered with a tinting-enabled fragment shader and
-/// the method 'isStateChange' won't take tinting into account. This means fewer state changes, but
-/// also a slightly more complex fragment shader for non-tinted quads. On modern hardware, that's
-/// not a problem, and you'll avoid unnecessary state changes. However, on old devices like the
-/// iPad 1, you should be careful with this setting. Default: NO
-@property (nonatomic, assign) BOOL forceTinted;
 
 /// The current texture of the batch, if there is one.
 @property (nonatomic, readonly) SPTexture *texture;

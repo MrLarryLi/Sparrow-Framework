@@ -141,6 +141,25 @@ static SPRenderingAPI toSPRenderingAPI[] = {
 
 #pragma mark Methods
 
+- (void)clearWithDefaultDepthStencilAndMask
+{
+    GLboolean scissorEnabled = glIsEnabled(GL_SCISSOR_TEST);
+    if (scissorEnabled)
+        glDisable(GL_SCISSOR_TEST);
+    
+    if( _backBuffer.enableDepthAndStencil ) {
+        glClearDepthf(1);
+        glClearStencil(0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    } else {
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+    
+    if (scissorEnabled)
+        glEnable(GL_SCISSOR_TEST);
+    
+}
+
 - (void)clearWithRed:(float)red green:(float)green blue:(float)blue alpha:(float)alpha
                depth:(float)depth stencil:(uint)stencil mask:(SPClearMask)mask
 {
@@ -149,18 +168,23 @@ static SPRenderingAPI toSPRenderingAPI[] = {
         glDisable(GL_SCISSOR_TEST);
     
     glClearColor(red, green, blue, alpha);
-    glClearDepthf(depth);
-    glClearStencil(stencil);
     
-    GLbitfield glMask = 0;
-    if ((mask & SPClearMaskColor) != 0)
-        glMask |= GL_COLOR_BUFFER_BIT;
-    if ((mask & SPClearMaskDepth) != 0)
-        glMask |= GL_DEPTH_BUFFER_BIT;
-    if ((mask & SPClearMaskStencil) != 0)
-        glMask |= GL_STENCIL_BUFFER_BIT;
-    
-    glClear(glMask);
+    if( _backBuffer.enableDepthAndStencil ) {
+        glClearDepthf(depth);
+        glClearStencil(stencil);
+        
+        GLbitfield glMask = 0;
+        if ((mask & SPClearMaskColor) != 0)
+            glMask |= GL_COLOR_BUFFER_BIT;
+        if ((mask & SPClearMaskDepth) != 0)
+            glMask |= GL_DEPTH_BUFFER_BIT;
+        if ((mask & SPClearMaskStencil) != 0)
+            glMask |= GL_STENCIL_BUFFER_BIT;
+        
+        glClear(glMask);
+    } else {
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
     
     if (scissorEnabled)
         glEnable(GL_SCISSOR_TEST);

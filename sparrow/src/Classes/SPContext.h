@@ -64,6 +64,9 @@ typedef NS_ENUM(NSInteger, SPRenderingAPI)
 /// @name Methods
 /// -------------
 
+/// Clears the depth and stencil buffers with default values
+- (void)clearWithDefaultDepthStencilAndMask;
+
 /// Clears the color, depth, and stencil buffers associated with this context and fills them with
 /// the specified values.
 - (void)clearWithRed:(float)red green:(float)green blue:(float)blue alpha:(float)alpha

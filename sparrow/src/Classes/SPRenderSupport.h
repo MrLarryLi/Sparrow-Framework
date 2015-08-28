@@ -83,10 +83,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// Checks for an OpenGL error. If there is one, it is logged an the error code is returned.
 + (uint)checkForOpenGLError;
 
-/// Raises the number of draw calls by a specific value. Call this method in custom render methods
-/// to keep the statistics display in sync.
-- (void)addDrawCalls:(NSInteger)count;
-
 /// Sets up the projection matrices for 2D and 3D rendering.
 ///
 /// The first 4 parameters define which area of the stage you want to view. The camera
@@ -221,9 +217,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// The current stencil reference value, which is per default the depth of the current
 /// stencil mask stack. Only change this value if you know what you're doing.
 @property (nonatomic, assign) uint stencilReferenceValue;
-
-/// Indicates the number of OpenGL ES draw calls since the last call to `nextFrame`.
-@property (nonatomic, readonly) NSInteger numDrawCalls;
 
 @end
 

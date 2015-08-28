@@ -548,12 +548,4 @@ SP_INLINE BOOL isOpaqueWhite(SPVertexColor color)
     _premultipliedAlpha = value;
 }
 
-- (BOOL)tinted
-{
-    for (NSInteger i=0; i<_numVertices; ++i)
-        if (!isOpaqueWhite(_vertices[i].color)) return YES;
-
-    return NO;
-}
-
 @end

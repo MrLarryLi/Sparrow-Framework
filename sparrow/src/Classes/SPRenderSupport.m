@@ -90,7 +90,6 @@
     SPMatrix *_mvpMatrix;
     SPMatrix3D *_projectionMatrix3D;
     SPMatrix3D *_mvpMatrix3D;
-    NSInteger _numDrawCalls;
 
     SP_GENERIC(NSMutableArray, SPRenderState*) *_stateStack;
     SPRenderState *_stateStackTop;
@@ -189,10 +188,8 @@
 
 + (void)clearWithColor:(uint)color alpha:(float)alpha;
 {
-    [SPContext.currentContext clearWithRed:SPColorGetRed(color)   / 255.0f
-                                     green:SPColorGetGreen(color) / 255.0f
-                                      blue:SPColorGetBlue(color)  / 255.0f
-                                     alpha:alpha];
+    sglClearColor(color, alpha);
+    [SPContext.currentContext clearWithDefaultDepthStencilAndMask];
 }
 
 + (uint)checkForOpenGLError
@@ -200,11 +197,6 @@
     GLenum error;
     while ((error = glGetError())) SPLog(@"There was an OpenGL error: %s", sglGetErrorString(error));
     return error;
-}
-
-- (void)addDrawCalls:(NSInteger)count
-{
-    _numDrawCalls += count;
 }
 
 - (void)setProjectionMatrixWithX:(float)x y:(float)y width:(float)width height:(float)height
@@ -280,7 +272,6 @@
 
     _clipRectStackSize = 0;
     _stateStackIndex = 0;
-    _numDrawCalls = 0;
     _stateStackTop = _stateStack[0];
 }
 
@@ -309,12 +300,10 @@
         }
     }
     
-    if ([_primaryQuadBatchStack->_quadBatchTop isStateChangeWithTinted:quad.tinted
-                                                               texture:quadTexture
-                                                                 alpha:alpha
-                                                    premultipliedAlpha:quad.premultipliedAlpha
-                                                             blendMode:blendMode
-                                                              numQuads:1])
+    if ([_primaryQuadBatchStack->_quadBatchTop isStateChangeWithTexture:quad.texture
+                             premultipliedAlpha:quad.premultipliedAlpha
+                                      blendMode:blendMode
+                                       numQuads:1])
     {
         [self finishQuadBatch]; // next batch
     }
@@ -341,12 +330,10 @@
         }
     }
     
-    if ([_primaryQuadBatchStack->_quadBatchTop isStateChangeWithTinted:quadBatch.tinted
-                                                               texture:quadBatchTexture
-                                                                 alpha:quadBatch.alpha
-                                                    premultipliedAlpha:quadBatch.premultipliedAlpha
-                                                             blendMode:quadBatch.blendMode
-                                                              numQuads:quadBatch.numQuads])
+    if ([_primaryQuadBatchStack->_quadBatchTop isStateChangeWithTexture:quadBatch.texture
+                             premultipliedAlpha:quadBatch.premultipliedAlpha
+                                      blendMode:quadBatch.blendMode
+                                       numQuads:quadBatch.numQuads])
     {
         [self finishQuadBatch]; // next batch
     }
@@ -360,17 +347,15 @@
     {
         if (_matrix3DStackSize == 0)
         {
-            [_primaryQuadBatchStack->_quadBatchTop renderWithMvpMatrix3D:_projectionMatrix3D];
+            [_primaryQuadBatchStack renderWithMatrix3D:_projectionMatrix3D];
         }
         else
         {
             [_mvpMatrix3D copyFromMatrix:_projectionMatrix3D];
             [_mvpMatrix3D prependMatrix:_modelViewMatrix3D];
-            [_primaryQuadBatchStack->_quadBatchTop renderWithMvpMatrix3D:_mvpMatrix3D];
+            [_primaryQuadBatchStack renderWithMatrix3D:_mvpMatrix3D];
         }
-        
         [_primaryQuadBatchStack resetStack];
-        ++_numDrawCalls;
     }
 }
 
