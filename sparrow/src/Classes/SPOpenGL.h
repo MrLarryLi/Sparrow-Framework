@@ -108,6 +108,8 @@ SP_EXTERN const char* sglGetErrorString(uint error);
     #define glScissor                   sglScissor
     #define glUseProgram                sglUseProgram
     #define glViewport                  sglViewport
+    #define glDepthMask                 sglDepthMask
+    #define glDepthFunc                 sglDepthFunc
 
     SP_EXTERN void                      sglActiveTexture(GLenum texture);
     SP_EXTERN void                      sglBindBuffer(GLenum target, GLuint buffer);
@@ -128,4 +130,8 @@ SP_EXTERN const char* sglGetErrorString(uint error);
     SP_EXTERN void                      sglScissor(GLint x, GLint y, GLsizei width, GLsizei height);
     SP_EXTERN void                      sglUseProgram(GLuint program);
     SP_EXTERN void                      sglViewport(GLint x, GLint y, GLsizei width, GLsizei height);
+    SP_EXTERN void                      sglUniform4fAlpha(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+    SP_EXTERN void                      sglClearColor(uint color, float alpha);
+    SP_EXTERN void                      sglDepthMask(GLboolean depthMask);
+    SP_EXTERN void                      sglDepthFunc(GLenum depthFunc);
 #endif

@@ -24,7 +24,6 @@
 
 @implementation SPQuad
 {
-    BOOL _tinted;
 }
 
 #pragma mark Initialization
@@ -35,8 +34,6 @@
     {
         if (width  <= MIN_SIZE) width  = MIN_SIZE;
         if (height <= MIN_SIZE) height = MIN_SIZE;
-        
-        _tinted = color != SPColorWhite;
         
         _vertexData = [[SPVertexData alloc] initWithSize:4 premultipliedAlpha:pma];
         _vertexData.vertices[1].position.x = width;
@@ -94,9 +91,6 @@
 {
     [_vertexData setColor:color atIndex:vertexID];
     [self vertexDataDidChange];
-    
-    if (color != SPColorWhite) _tinted = YES;
-    else _tinted = (self.alpha != 1.0f) || _vertexData.tinted;
 }
 
 - (uint)colorOfVertex:(NSInteger)vertexID
@@ -108,9 +102,6 @@
 {
     [_vertexData setAlpha:alpha atIndex:vertexID];
     [self vertexDataDidChange];
-    
-    if (alpha != 1.0) _tinted = true;
-    else _tinted = (self.alpha != 1.0f) || _vertexData.tinted;
 }
 
 - (float)alphaOfVertex:(NSInteger)vertexID
@@ -140,7 +131,6 @@
 {
     SPQuad *quad = [super copyWithZone:zone];
     
-    quad->_tinted = _tinted;
     SP_RELEASE_AND_COPY(quad->_vertexData, _vertexData);
     [quad vertexDataDidChange];
     
@@ -190,14 +180,6 @@
     }
 }
 
-- (void)setAlpha:(float)alpha
-{
-    super.alpha = alpha;
-
-    if (self.alpha != 1.0f) _tinted = true;
-    else _tinted = _vertexData.tinted;
-}
-
 #pragma mark Properties
 
 - (uint)color
@@ -211,9 +193,6 @@
         [_vertexData setColor:color atIndex:i];
 
     [self vertexDataDidChange];
-
-    if (color != SPColorWhite) _tinted = YES;
-    else _tinted = (self.alpha != 1.0f) || _vertexData.tinted;
 }
 
 - (BOOL)premultipliedAlpha
@@ -225,11 +204,6 @@
 {
     if (premultipliedAlpha != self.premultipliedAlpha)
         _vertexData.premultipliedAlpha = premultipliedAlpha;
-}
-
-- (BOOL)tinted
-{
-    return _tinted;
 }
 
 - (SPTexture *)texture

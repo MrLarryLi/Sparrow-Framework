@@ -55,6 +55,9 @@ const char* sglGetErrorString(uint error)
 #undef glScissor
 #undef glUseProgram
 #undef glViewport
+#undef glDepthMask
+#undef glDepthFunc
+
 
 // redefine extension mappings
 #define glBindVertexArray       glBindVertexArrayOES
@@ -63,6 +66,16 @@ const char* sglGetErrorString(uint error)
 // constants
 #define MAX_TEXTURE_UNITS   32
 #define INVALID_STATE      -1
+
+struct SGLClearCache
+{
+    GLboolean depthMask;
+    GLenum depthFunc;
+    GLuint uniformAlpha;
+    GLfloat alphaW;
+    uint clearColor;
+    float clearColorAlpha;
+};
 
 // state definition
 struct SGLStateCache
@@ -79,6 +92,7 @@ struct SGLStateCache
     int  blendDst;
     int  viewport[4];
     int  scissor[4];
+    struct SGLClearCache clearCache;
 };
 
 // global cache
@@ -379,9 +393,10 @@ void sglDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
 
 void sglDeleteProgram(GLuint program)
 {
-    if (currentStateCache->program == program)
+    if (currentStateCache->program == program) {
         currentStateCache->program = INVALID_STATE;
-
+        currentStateCache->clearCache.uniformAlpha = INVALID_STATE;
+    }
     glDeleteProgram(program);
 }
 
@@ -525,6 +540,7 @@ void sglUseProgram(GLuint program)
     if (program != currentStateCache->program)
     {
         currentStateCache->program = program;
+        currentStateCache->clearCache.uniformAlpha = INVALID_STATE;
         glUseProgram(program);
     }
 }
@@ -542,6 +558,44 @@ void sglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
         currentStateCache->viewport[3] = height;
         
         glViewport(x, y, width, height);
+    }
+}
+
+void sglUniform4fAlpha(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
+    if( currentStateCache -> clearCache.uniformAlpha != location ) {
+        currentStateCache -> clearCache.uniformAlpha = location;
+        currentStateCache -> clearCache.alphaW = w;
+        glUniform4f(location, x, y, z, w);
+    } else {
+        if( !SPIsFloatEqual( currentStateCache -> clearCache.alphaW, w ) ) {
+            currentStateCache -> clearCache.alphaW = w;
+            glUniform4f(location, x, y, z, w);
+        }
+    }
+}
+
+void sglClearColor(uint color, float alpha) {
+    if( currentStateCache -> clearCache.clearColor != color || !SPIsFloatEqual(currentStateCache -> clearCache.clearColorAlpha, alpha) ) {
+        currentStateCache -> clearCache.clearColor = color;
+        currentStateCache -> clearCache.clearColorAlpha = alpha;
+        float red   = SPColorGetRed(color)   / 255.0f;
+        float green = SPColorGetGreen(color) / 255.0f;
+        float blue  = SPColorGetBlue(color)  / 255.0f;
+        glClearColor(red, green, blue, alpha);
+    }
+}
+
+void sglDepthMask(GLboolean depthMask) {
+    if( currentStateCache -> clearCache.depthMask != depthMask ) {
+        currentStateCache -> clearCache.depthMask = depthMask;
+        glDepthMask(depthMask);
+    }
+}
+
+void sglDepthFunc(GLenum depthFunc) {
+    if( currentStateCache -> clearCache.depthFunc != depthFunc ) {
+        currentStateCache -> clearCache.depthFunc = depthFunc;
+        glDepthFunc(depthFunc);
     }
 }
 

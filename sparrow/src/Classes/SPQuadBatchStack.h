@@ -41,7 +41,7 @@ access it directly when needed.
 - (void)trimQuadBatches;
 
 /// Renders with the matrix provided.
-- (void)renderWithMatrix: (SPMatrix3D *)matrix;
+- (void)renderWithMatrix3D: (SPMatrix3D *)matrix;
 
 /// Resets and provides a new quadbatch top
 - (void)resetStack;

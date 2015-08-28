@@ -145,7 +145,6 @@
     if (_flattenedContents)
     {
         [support finishQuadBatch];
-        [support addDrawCalls:_flattenedContents.count];
 
         SPMatrix3D *mvpMatrix = support.mvpMatrix3D;
         float alpha = support.alpha;

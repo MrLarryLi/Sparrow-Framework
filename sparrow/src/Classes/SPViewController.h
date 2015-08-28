@@ -183,6 +183,9 @@ typedef void (^SPRootCreatedBlock)(SPSprite *root);
 /// The antialiasing level. 0 - no antialasing, 16 - maximum antialiasing. Default: 0
 @property (nonatomic, assign) NSInteger antiAliasing;
 
+/// Enables or disables the depth and stencil. Some features will not work.
+@property (nonatomic, assign) BOOL depthStencilBufferEnabled;
+
 /// For setting the desired frames per second at which the update and drawing will take place.
 @property (nonatomic, assign) NSInteger preferredFramesPerSecond;
 
@@ -191,9 +194,6 @@ typedef void (^SPRootCreatedBlock)(SPSprite *root);
 
 /// Indicates if multitouch input is enabled.
 @property (nonatomic, assign) BOOL multitouchEnabled;
-
-/// Indicates if a small statistics box (with FPS and draw count) is displayed.
-@property (nonatomic, assign) BOOL showStats;
 
 /// Indicates if retina display support is enabled.
 @property (nonatomic, readonly) BOOL supportHighResolutions;

@@ -337,7 +337,6 @@ static BOOL _endDebugMarker() {
     [self updatePassTexturesWithWidth:boundsPot.width height:boundsPot.height scale:_resolution * scale];
     
     [support finishQuadBatch];
-    [support addDrawCalls:_numPasses];
     [support pushStateWithMatrix:[SPMatrix matrixWithIdentity] alpha:1.0f blendMode:SPBlendModeAuto];
     [support pushMatrix3D];
     [support pushClipRect:boundsPot intersectWithCurrent:NO];
