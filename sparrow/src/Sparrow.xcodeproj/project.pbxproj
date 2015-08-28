@@ -7,10 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6B057BFF1B8EA1C300D3ED6A /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B057BFE1B8EA1C300D3ED6A /* libz.dylib */; };
 		6B1220B81B8D27F90012E3E1 /* SPSimpleMovieClip.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B1220B41B8D27F90012E3E1 /* SPSimpleMovieClip.m */; };
-		6B1220B91B8D27F90012E3E1 /* SPSimpleMovieClip.h in Headers */ = {isa = PBXBuildFile; fileRef = 6B1220B51B8D27F90012E3E1 /* SPSimpleMovieClip.h */; };
-		6B1220BA1B8D27F90012E3E1 /* SPQuadBatchStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B1220B61B8D27F90012E3E1 /* SPQuadBatchStack.m */; };
-		6B1220BB1B8D27F90012E3E1 /* SPQuadBatchStack.h in Headers */ = {isa = PBXBuildFile; fileRef = 6B1220B71B8D27F90012E3E1 /* SPQuadBatchStack.h */; };
+		6B1220B91B8D27F90012E3E1 /* SPSimpleMovieClip.h in Headers */ = {isa = PBXBuildFile; fileRef = 6B1220B51B8D27F90012E3E1 /* SPSimpleMovieClip.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		6BED62081B8FCBA200BFEBD1 /* SPQuadBatchStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BED62061B8FCBA200BFEBD1 /* SPQuadBatchStack.m */; };
+		6BED62091B8FCBA200BFEBD1 /* SPQuadBatchStack.h in Headers */ = {isa = PBXBuildFile; fileRef = 6BED62071B8FCBA200BFEBD1 /* SPQuadBatchStack.h */; };
 		7704F8CF1B7D5A8500E9217F /* SparrowBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 7704F8CC1B7D597F00E9217F /* SparrowBase.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7704F8D21B7D5BFD00E9217F /* SparrowBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 7704F8D01B7D5BF200E9217F /* SparrowBase.m */; };
 		7728E1A91B7A9704007D1BA7 /* SPGLTexture_Internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 7728E1A71B7A9704007D1BA7 /* SPGLTexture_Internal.h */; };
@@ -37,7 +38,6 @@
 		77E425921B855B7200D5F5B9 /* module.modulemap in CopyFiles */ = {isa = PBXBuildFile; fileRef = 77E425911B855B6900D5F5B9 /* module.modulemap */; };
 		77E428631B8BC40400D5F5B9 /* SPFrameBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 77E428611B8BC40400D5F5B9 /* SPFrameBuffer.h */; };
 		77E428641B8BC40400D5F5B9 /* SPFrameBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 77E428621B8BC40400D5F5B9 /* SPFrameBuffer.m */; };
-		77F298331B7D69F4009D420B /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 776545C11B7D3B1900C4E395 /* libz.tbd */; };
 		872F5C3D1880C9E30016071B /* SPFragmentFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 872F5C3B1880C9E30016071B /* SPFragmentFilter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		872F5C3E1880C9E30016071B /* SPFragmentFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = 872F5C3C1880C9E30016071B /* SPFragmentFilter.m */; };
 		872F5C471880E2B50016071B /* SPBlurFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 872F5C451880E2B50016071B /* SPBlurFilter.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -239,10 +239,11 @@
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		28FD14FF0DC6FC520079059D /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		28FD15070DC6FC5B0079059D /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		6B057BFE1B8EA1C300D3ED6A /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		6B1220B41B8D27F90012E3E1 /* SPSimpleMovieClip.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SPSimpleMovieClip.m; sourceTree = "<group>"; };
 		6B1220B51B8D27F90012E3E1 /* SPSimpleMovieClip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPSimpleMovieClip.h; sourceTree = "<group>"; };
-		6B1220B61B8D27F90012E3E1 /* SPQuadBatchStack.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SPQuadBatchStack.m; sourceTree = "<group>"; };
-		6B1220B71B8D27F90012E3E1 /* SPQuadBatchStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPQuadBatchStack.h; sourceTree = "<group>"; };
+		6BED62061B8FCBA200BFEBD1 /* SPQuadBatchStack.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SPQuadBatchStack.m; sourceTree = "<group>"; };
+		6BED62071B8FCBA200BFEBD1 /* SPQuadBatchStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPQuadBatchStack.h; sourceTree = "<group>"; };
 		7704F8CC1B7D597F00E9217F /* SparrowBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SparrowBase.h; sourceTree = "<group>"; };
 		7704F8D01B7D5BF200E9217F /* SparrowBase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SparrowBase.m; sourceTree = "<group>"; };
 		7728E1A71B7A9704007D1BA7 /* SPGLTexture_Internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPGLTexture_Internal.h; sourceTree = "<group>"; };
@@ -450,8 +451,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B057BFF1B8EA1C300D3ED6A /* libz.dylib in Frameworks */,
 				77E4258D1B85577C00D5F5B9 /* libSparrow.a in Frameworks */,
-				77F298331B7D69F4009D420B /* libz.tbd in Frameworks */,
 				DE95429519654F75005D9F11 /* AudioToolbox.framework in Frameworks */,
 				DE95429619654F75005D9F11 /* AVFoundation.framework in Frameworks */,
 				DE95429719654F75005D9F11 /* GLKit.framework in Frameworks */,
@@ -514,6 +515,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				6B057BFE1B8EA1C300D3ED6A /* libz.dylib */,
 				776545C11B7D3B1900C4E395 /* libz.tbd */,
 				DEE63A8511AED51400D60321 /* AudioToolbox.framework */,
 				DE18FE4411B083B200D01F04 /* AVFoundation.framework */,
@@ -723,8 +725,8 @@
 				DE2ED8560F6D54900012B6BA /* SPQuad.m */,
 				DEC87D0516E0CDD80050EA95 /* SPQuadBatch.h */,
 				DEC87D0616E0CDD80050EA95 /* SPQuadBatch.m */,
-				6B1220B71B8D27F90012E3E1 /* SPQuadBatchStack.h */,
-				6B1220B61B8D27F90012E3E1 /* SPQuadBatchStack.m */,
+				6BED62071B8FCBA200BFEBD1 /* SPQuadBatchStack.h */,
+				6BED62061B8FCBA200BFEBD1 /* SPQuadBatchStack.m */,
 				DE4D6AEA0F75913D0045CBF7 /* SPSprite.h */,
 				DE4D6AEB0F75913D0045CBF7 /* SPSprite.m */,
 				77DDCDFF1B6BFDE300835C32 /* SPSprite3D.h */,
@@ -908,7 +910,7 @@
 				779436C01B7E5AB100EAAB72 /* SPDebug.h in Headers */,
 				DE574D5F1705B83D008B03D7 /* SPBlendMode.h in Headers */,
 				872F5C471880E2B50016071B /* SPBlurFilter.h in Headers */,
-				6B1220BB1B8D27F90012E3E1 /* SPQuadBatchStack.h in Headers */,
+				6BED62091B8FCBA200BFEBD1 /* SPQuadBatchStack.h in Headers */,
 				DE611389134F8F8300AB742E /* SPButton.h in Headers */,
 				872F5C531880E57A0016071B /* SPColorMatrix.h in Headers */,
 				77DDCDF91B6BE1A500835C32 /* SPMatrix3D.h in Headers */,
@@ -1146,7 +1148,7 @@
 				DEFE4BDC101B31DF00E22471 /* SPImage.m in Sources */,
 				DEFE4BDD101B31DF00E22471 /* SPTextField.m in Sources */,
 				DEFE4BDE101B31DF00E22471 /* SPTexture.m in Sources */,
-				6B1220BA1B8D27F90012E3E1 /* SPQuadBatchStack.m in Sources */,
+				6BED62081B8FCBA200BFEBD1 /* SPQuadBatchStack.m in Sources */,
 				DEFE4BDF101B31DF00E22471 /* SPGLTexture.m in Sources */,
 				DEFE4BE0101B31DF00E22471 /* SPSubTexture.m in Sources */,
 				DEFE4BE1101B31DF00E22471 /* SPButton.m in Sources */,
@@ -1248,6 +1250,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_MASTER_OBJECT_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
@@ -1286,6 +1289,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_MASTER_OBJECT_FILE = YES;
 				INSTALL_PATH = "$(BUILT_PRODUCTS_DIR)";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = NO;
 				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
@@ -1350,6 +1354,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				MODULEMAP_FILE = module.modulemap;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = Sparrow;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
