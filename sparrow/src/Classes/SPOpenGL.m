@@ -82,13 +82,13 @@ struct SGLStateCache
 };
 
 // global cache
-static SGLStateCacheRef currentStateCache = NULL;
+static SGLStateCacheRef globalCurrentStateCache = NULL;
 
 /** --------------------------------------------------------------------------------------------- */
 #pragma mark Internal
 /** --------------------------------------------------------------------------------------------- */
 
-SP_INLINE int __getIndexForCapability(uint cap)
+SP_INLINE int getIndexForCapability(uint cap)
 {
     switch (cap)
     {
@@ -107,7 +107,7 @@ SP_INLINE int __getIndexForCapability(uint cap)
     return INVALID_STATE;
 }
 
-SP_INLINE uint __getCapabilityForIndex(int index)
+SP_INLINE uint getCapabilityForIndex(int index)
 {
     switch (index)
     {
@@ -126,7 +126,7 @@ SP_INLINE uint __getCapabilityForIndex(int index)
     return GL_NONE;
 }
 
-SP_INLINE void __getChar(GLenum pname, GLchar* state, GLint* outParam)
+SP_INLINE void getChar(GLenum pname, GLchar* state, GLint* outParam)
 {
     if (*state == INVALID_STATE)
     {
@@ -138,7 +138,7 @@ SP_INLINE void __getChar(GLenum pname, GLchar* state, GLint* outParam)
     *outParam = *state;
 }
 
-SP_INLINE void __getInt(GLenum pname, GLint* state, GLint* outParam)
+SP_INLINE void getInt(GLenum pname, GLint* state, GLint* outParam)
 {
     if (*state == INVALID_STATE)
         glGetIntegerv(pname, state);
@@ -146,7 +146,7 @@ SP_INLINE void __getInt(GLenum pname, GLint* state, GLint* outParam)
     *outParam = *state;
 }
 
-SP_INLINE void __getIntv(GLenum pname, GLint count, GLint statev[], GLint* outParams)
+SP_INLINE void getIntv(GLenum pname, GLint count, GLint statev[], GLint* outParams)
 {
     if (*statev == INVALID_STATE)
         glGetIntegerv(pname, statev);
@@ -154,7 +154,7 @@ SP_INLINE void __getIntv(GLenum pname, GLint count, GLint statev[], GLint* outPa
     memcpy(outParams, statev, sizeof(GLint)*count);
 }
 
-SP_INLINE SGLStateCacheRef __getDefaultStateCache(void)
+SP_INLINE SGLStateCacheRef getDefaultStateCache(void)
 {
     static SGLStateCacheRef defaultStateCache;
     static dispatch_once_t onceToken;
@@ -167,14 +167,15 @@ SP_INLINE SGLStateCacheRef __getDefaultStateCache(void)
     return defaultStateCache;
 }
 
-SP_INLINE SGLStateCacheRef __getCurrentStateCache(void)
+SP_INLINE SGLStateCacheRef getCurrentStateCache(void)
 {
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        currentStateCache = __getDefaultStateCache();
+    dispatch_once(&onceToken, ^
+    {
+        globalCurrentStateCache = getDefaultStateCache();
     });
 
-    return currentStateCache;
+    return globalCurrentStateCache;
 }
 
 /** --------------------------------------------------------------------------------------------- */
@@ -197,11 +198,11 @@ SGLStateCacheRef sglStateCacheCopy(SGLStateCacheRef stateCache)
 
 void sglStateCacheRelease(SGLStateCacheRef stateCache)
 {
-    if (stateCache == __getCurrentStateCache())
-        sglStateCacheSetCurrent(__getDefaultStateCache());
+    if (stateCache == getCurrentStateCache())
+        sglStateCacheSetCurrent(getDefaultStateCache());
 
-    if (!stateCache || stateCache == __getDefaultStateCache())
-        return sglStateCacheSetCurrent(__getDefaultStateCache());
+    if (!stateCache || stateCache == getDefaultStateCache())
+        return sglStateCacheSetCurrent(getDefaultStateCache());
 
     free(stateCache);
 }
@@ -213,17 +214,17 @@ void sglStateCacheReset(SGLStateCacheRef stateCache)
 
 SGLStateCacheRef sglStateCacheGetCurrent(void)
 {
-    return __getCurrentStateCache();
+    return getCurrentStateCache();
 }
 
 void sglStateCacheSetCurrent(SGLStateCacheRef stateCache)
 {
-    if (!stateCache) stateCache = __getDefaultStateCache();
-    if (stateCache == __getCurrentStateCache()) return;
+    if (!stateCache) stateCache = getDefaultStateCache();
+    if (stateCache == getCurrentStateCache()) return;
 
     // don't alter the current state
-    struct SGLStateCache tempStateCache = *currentStateCache;
-    currentStateCache = &tempStateCache;
+    struct SGLStateCache tempStateCache = *globalCurrentStateCache;
+    globalCurrentStateCache = &tempStateCache;
 
     if (stateCache->framebuffer != INVALID_STATE)
         sglBindFramebuffer(GL_FRAMEBUFFER, stateCache->framebuffer);
@@ -272,12 +273,12 @@ void sglStateCacheSetCurrent(SGLStateCacheRef stateCache)
     for (int i=0; i<10; ++i)
     {
         if (stateCache->enabledCaps[i] == true)
-            sglEnable(__getCapabilityForIndex(i));
+            sglEnable(getCapabilityForIndex(i));
         else if (stateCache->enabledCaps[i] == false)
-            sglDisable(__getCapabilityForIndex(i));
+            sglDisable(getCapabilityForIndex(i));
     }
 
-    currentStateCache = stateCache;
+    globalCurrentStateCache = stateCache;
 }
 
 /** --------------------------------------------------------------------------------------------- */
@@ -287,6 +288,7 @@ void sglStateCacheSetCurrent(SGLStateCacheRef stateCache)
 void sglActiveTexture(GLenum texture)
 {
     int textureUnit = texture-GL_TEXTURE0;
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
 
     if (textureUnit != currentStateCache->textureUnit)
     {
@@ -298,6 +300,7 @@ void sglActiveTexture(GLenum texture)
 void sglBindBuffer(GLenum target, GLuint buffer)
 {
     int index = target-GL_ARRAY_BUFFER;
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
 
     if (buffer != currentStateCache->buffer[index])
     {
@@ -307,7 +310,7 @@ void sglBindBuffer(GLenum target, GLuint buffer)
 }
 
 void sglBindFramebuffer(GLenum target, GLuint framebuffer)
-{
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     if (framebuffer != currentStateCache->framebuffer)
     {
         currentStateCache->framebuffer = framebuffer;
@@ -317,6 +320,7 @@ void sglBindFramebuffer(GLenum target, GLuint framebuffer)
 
 void sglBindRenderbuffer(GLenum target, GLuint renderbuffer)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     if (renderbuffer != currentStateCache->renderbuffer)
     {
         currentStateCache->renderbuffer = renderbuffer;
@@ -326,6 +330,7 @@ void sglBindRenderbuffer(GLenum target, GLuint renderbuffer)
 
 void sglBindTexture(GLenum target, GLuint texture)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     if (currentStateCache->textureUnit == INVALID_STATE)
         sglActiveTexture(GL_TEXTURE0);
 
@@ -338,6 +343,7 @@ void sglBindTexture(GLenum target, GLuint texture)
 
 void sglBindVertexArray(GLuint array)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     if (array != currentStateCache->vertexArray)
     {
         currentStateCache->vertexArray = array;
@@ -347,6 +353,7 @@ void sglBindVertexArray(GLuint array)
 
 void sglBlendFunc(GLenum sfactor, GLenum dfactor)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     if (sfactor != currentStateCache->blendSrc || dfactor != currentStateCache->blendDst)
     {
         currentStateCache->blendSrc = sfactor;
@@ -357,6 +364,7 @@ void sglBlendFunc(GLenum sfactor, GLenum dfactor)
 
 void sglDeleteBuffers(GLsizei n, const GLuint* buffers)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     for (int i=0; i<n; i++)
     {
         if (currentStateCache->buffer[0] == buffers[i]) currentStateCache->buffer[0] = INVALID_STATE;
@@ -368,6 +376,7 @@ void sglDeleteBuffers(GLsizei n, const GLuint* buffers)
 
 void sglDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     for (int i=0; i<n; i++)
     {
         if (currentStateCache->framebuffer == framebuffers[i])
@@ -379,6 +388,7 @@ void sglDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
 
 void sglDeleteProgram(GLuint program)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     if (currentStateCache->program == program)
         currentStateCache->program = INVALID_STATE;
 
@@ -387,6 +397,7 @@ void sglDeleteProgram(GLuint program)
 
 void sglDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     for (int i=0; i<n; i++)
     {
         if (currentStateCache->renderbuffer == renderbuffers[i])
@@ -398,6 +409,7 @@ void sglDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
 
 void sglDeleteTextures(GLsizei n, const GLuint* textures)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     for (int i=0; i<n; i++)
     {
         for (int j=0; j<32; j++)
@@ -412,6 +424,7 @@ void sglDeleteTextures(GLsizei n, const GLuint* textures)
 
 void sglDeleteVertexArrays(GLsizei n, const GLuint* arrays)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     for (int i=0; i<n; i++)
     {
         if (currentStateCache->vertexArray == arrays[i])
@@ -423,7 +436,8 @@ void sglDeleteVertexArrays(GLsizei n, const GLuint* arrays)
 
 void sglDisable(GLenum cap)
 {
-    int index = __getIndexForCapability(cap);
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
+    int index = getIndexForCapability(cap);
 
     if (currentStateCache->enabledCaps[index] != false)
     {
@@ -434,7 +448,8 @@ void sglDisable(GLenum cap)
 
 void sglEnable(GLenum cap)
 {
-    int index = __getIndexForCapability(cap);
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
+    int index = getIndexForCapability(cap);
 
     if (currentStateCache->enabledCaps[index] != true)
     {
@@ -445,6 +460,7 @@ void sglEnable(GLenum cap)
 
 void sglGetIntegerv(GLenum pname, GLint* params)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
 
     switch (pname)
     {
@@ -457,47 +473,47 @@ void sglGetIntegerv(GLenum pname, GLint* params)
         case GL_SAMPLE_COVERAGE:
         case GL_SCISSOR_TEST:
         case GL_STENCIL_TEST:
-            __getChar(pname, &currentStateCache->enabledCaps[__getIndexForCapability(pname)], params);
+            getChar(pname, &currentStateCache->enabledCaps[getIndexForCapability(pname)], params);
             return;
 
         case GL_ACTIVE_TEXTURE:
-            __getInt(pname, &currentStateCache->textureUnit, params);
+            getInt(pname, &currentStateCache->textureUnit, params);
             return;
 
         case GL_ARRAY_BUFFER_BINDING:
-            __getInt(pname, &currentStateCache->buffer[0], params);
+            getInt(pname, &currentStateCache->buffer[0], params);
             return;
 
         case GL_CURRENT_PROGRAM:
-            __getInt(pname, &currentStateCache->program, params);
+            getInt(pname, &currentStateCache->program, params);
             return;
 
         case GL_ELEMENT_ARRAY_BUFFER_BINDING:
-            __getInt(pname, &currentStateCache->buffer[1], params);
+            getInt(pname, &currentStateCache->buffer[1], params);
             return;
 
         case GL_FRAMEBUFFER_BINDING:
-            __getInt(pname, &currentStateCache->framebuffer, params);
+            getInt(pname, &currentStateCache->framebuffer, params);
             return;
 
         case GL_RENDERBUFFER_BINDING:
-            __getInt(pname, &currentStateCache->renderbuffer, params);
+            getInt(pname, &currentStateCache->renderbuffer, params);
             return;
 
         case GL_SCISSOR_BOX:
-            __getIntv(pname, 4, currentStateCache->scissor, params);
+            getIntv(pname, 4, currentStateCache->scissor, params);
             return;
 
         case GL_TEXTURE_BINDING_2D:
-            __getInt(pname, &currentStateCache->textureUnit, params);
+            getInt(pname, &currentStateCache->textureUnit, params);
             return;
 
         case GL_VERTEX_ARRAY_BINDING:
-            __getInt(pname, &currentStateCache->vertexArray, params);
+            getInt(pname, &currentStateCache->vertexArray, params);
             return;
 
         case GL_VIEWPORT:
-            __getIntv(pname, 4, currentStateCache->viewport, params);
+            getIntv(pname, 4, currentStateCache->viewport, params);
             return;
     }
 
@@ -506,6 +522,7 @@ void sglGetIntegerv(GLenum pname, GLint* params)
 
 void sglScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     if (x      != currentStateCache->scissor[0] ||
         y      != currentStateCache->scissor[1] ||
         width  != currentStateCache->scissor[2] ||
@@ -522,6 +539,7 @@ void sglScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 
 void sglUseProgram(GLuint program)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     if (program != currentStateCache->program)
     {
         currentStateCache->program = program;
@@ -531,6 +549,7 @@ void sglUseProgram(GLuint program)
 
 void sglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+    SGLStateCacheRef currentStateCache = getCurrentStateCache();
     if (width  != currentStateCache->viewport[2] ||
         height != currentStateCache->viewport[3] ||
         x      != currentStateCache->viewport[0] ||
