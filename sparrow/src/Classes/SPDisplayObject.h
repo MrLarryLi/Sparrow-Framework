@@ -147,6 +147,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Sets both x and y members.
 - (void)setX: (float)x y: (float)y;
 
+/// Adds to x and y members.
+- (void)addToX: (float)x y: (float)y;
+
 /// Sets both pivotX and pivotY members.
 - (void)setPivotX: (float)pivotX pivotY: (float)pivotY;
 

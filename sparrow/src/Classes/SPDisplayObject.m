@@ -507,6 +507,13 @@ static SPDisplayObject *findCommonParent(SPDisplayObject *object1, SPDisplayObje
     _orientationChanged = YES;
 }
 
+- (void)addToX:(float)x y:(float)y
+{
+    _x += x;
+    _y += y;
+    _orientationChanged = YES;
+}
+
 - (float)scale
 {
     if (!SPIsFloatEqual(_scaleX, _scaleY))
